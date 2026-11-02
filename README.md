@@ -4,23 +4,25 @@ A modern, power-efficient AMOLED desk clock application built natively for Andro
 
 ---
 
-## ✨ Features
+## ✨ Editions Included
 
-- **AMOLED Pitch Black Canvas (`#000000`)**: Maximizes battery life and contrast on Pixel 9a Actua OLED displays.
-- **Built-in AMOLED Burn-In Protection**:
-  - **Micro-Pixel Orbiting**: Translates root coordinates by $\pm 2\text{--}4\text{ px}$ every 60s in a Lissajous orbit so static borders never sit on the same subpixel.
-  - **Cyclic Luminance Breathing**: Gently modulates peak brightness between 88% and 100% over 5-minute sine waves.
-  - **Ambient Auto-Dimming**: Detects low room lighting (< 10 lux) via `Sensor.TYPE_LIGHT` and drops brightness to ~20% with reduced halo glow.
-- **Segmented Flip Clock (`10:09`)**: High-contrast dark cards with central horizontal seams and mechanical hinge tabs.
-- **Docked Seconds Badge (`59`)**: Docked neatly at the lower-right corner of the minute card without colon clutter.
-- **Top-Left Badges**: Compact date (`10/28`) and day of week (`FRI`) outline pills.
-- **Interactive Left Status Stack**:
-  - Pixel Audio/Speaker (tap to toggle mute)
-  - Pixel Alarm Bell (tap to toggle alarm active state)
-  - AM/PM Indicator
-- **Top-Right Weather Widget**: Crescent moon resting on fluffy pixel clouds with twinkling stars and subtle ambient drift.
-- **Panoramic Cat Horizon**: Full-width rolling grassy hills with flowers and an 8-bit white cat walking in an ultra-low-power 8 FPS sprite animation loop.
-- **Pixel 9a Sleek Outer Halo**: White ambient neon glowing rim matching modern phone bezel curvature.
+1. **Wandering_Watch_Static (1:1 Exact Art Copy)**:
+   - Uses the exact high-resolution approved render as the background asset (`clock_template_base.png`).
+   - Retains the exact outer halo glow bloom, stippled rolling hills, flowers, stars, celestial moon/clouds, cat, and mechanical flip card hinges.
+   - Overlays **live real-time hours, minutes, seconds, date, and day** directly onto the card faces.
+   - Virtual 0.0% CPU and battery drain with full AMOLED burn-in protection.
+
+2. **Wandering_Watch (Procedural Animated Canvas)**:
+   - 100% vector-procedural Jetpack Compose canvas.
+   - Active 8 FPS animated cat walking cycle along the rolling hill curve.
+   - Interactive clickable speaker and alarm toggles.
+
+---
+
+## 🛡️ Built-in AMOLED Burn-In Protection
+- **Micro-Pixel Orbiting**: Translates root coordinates by $\pm 2\text{--}4\text{ px}$ every 60s in a Lissajous orbit so static borders never sit on the same subpixel.
+- **Cyclic Luminance Breathing**: Gently modulates peak brightness between 88% and 100% over 5-minute sine waves.
+- **Ambient Auto-Dimming**: Detects low room lighting (< 10 lux) via `Sensor.TYPE_LIGHT` and drops brightness to ~20% with reduced halo glow.
 
 ---
 
