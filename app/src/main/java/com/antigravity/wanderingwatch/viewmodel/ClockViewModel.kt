@@ -42,6 +42,7 @@ class ClockViewModel(application: Application) : AndroidViewModel(application) {
             while (isActive) {
                 val cal = Calendar.getInstance()
                 val hour12 = cal.get(Calendar.HOUR).let { if (it == 0) 12 else it }
+                val hour24 = cal.get(Calendar.HOUR_OF_DAY)
                 val hourStr = String.format(Locale.US, "%02d", hour12)
                 val minuteStr = String.format(Locale.US, "%02d", cal.get(Calendar.MINUTE))
                 val secondStr = String.format(Locale.US, "%02d", cal.get(Calendar.SECOND))
@@ -53,6 +54,7 @@ class ClockViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 val dayStr = dayFormat.format(cal.time).uppercase(Locale.US)
                 val amPmStr = if (cal.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
+                val isDay = hour24 in 6..17 // 6:00 AM to 5:59 PM
 
                 _timeState.update { current ->
                     current.copy(
@@ -63,7 +65,8 @@ class ClockViewModel(application: Application) : AndroidViewModel(application) {
                         seconds = secondStr,
                         date = dateStr,
                         dayOfWeek = dayStr,
-                        amPm = amPmStr
+                        amPm = amPmStr,
+                        isDaytime = isDay
                     )
                 }
 

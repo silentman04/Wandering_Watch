@@ -22,9 +22,10 @@ import com.antigravity.wanderingwatch.ui.theme.PureWhite
 import com.antigravity.wanderingwatch.viewmodel.ClockViewModel
 
 /**
- * 1:1 Static Artwork Screen scaled up to the Pixel 9a's native resolution and aspect ratio.
- * The outer glowing halo wraps right along the phone's physical screen perimeter.
- * Overlays live real-time hours, minutes, seconds, date, and day directly into the card slots.
+ * 1:1 Static Artwork Screen with real-time live clock overlay and Day/Night celestial transition.
+ * - Daytime (6:00 AM - 5:59 PM): Radiant pixel sun over fluffy clouds.
+ * - Nighttime (6:00 PM - 5:59 AM): Crescent moon over clouds with starlight.
+ * - Live hours, minutes, seconds, date, day, and AM/PM badges.
  */
 @Composable
 fun StaticDeskClockScreen(
@@ -52,15 +53,21 @@ fun StaticDeskClockScreen(
                     alpha = burnInState.luminanceFactor
                 }
         ) {
-            // 1. Scaled 1:1 Base Artwork with halo hugging the screen perimeter
+            // 1. Scaled 1:1 Base Artwork with automatic Day/Night celestial swap
+            val baseArtDrawable = if (timeState.isDaytime) {
+                R.drawable.clock_template_day
+            } else {
+                R.drawable.clock_template_night
+            }
+
             Image(
-                painter = painterResource(id = R.drawable.clock_template_base),
+                painter = painterResource(id = baseArtDrawable),
                 contentDescription = "Desk Clock Artwork",
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier.fillMaxSize()
             )
 
-            // 2. Real-time Live Time & Date Overlay on Canvas
+            // 2. Real-time Live Time, Date, and AM/PM Overlay on Canvas
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -72,6 +79,7 @@ fun StaticDeskClockScreen(
                         val largePixelSize = (h / 660f) * 11.2f
                         val smallPixelSize = (h / 660f) * 4.6f
                         val datePixelSize = (h / 660f) * 5.4f
+                        val amPmPixelSize = (h / 660f) * 3.8f
 
                         // A. LIVE FLIP CLOCK DIGITS (10:09)
                         val cardY = 0.5000f * h
@@ -166,6 +174,21 @@ fun StaticDeskClockScreen(
                             startY = dayY - (7 * datePixelSize / 2f),
                             pixelSize = datePixelSize,
                             spacing = daySpacing,
+                            color = PureWhite
+                        )
+
+                        // E. LIVE AM/PM BADGE
+                        val amPmX = 0.0857f * w
+                        val amPmY = 0.5545f * h
+                        val amPmSpacing = amPmPixelSize * 0.6f
+                        val amPmTextW = PixelGlyphs.measureSmallTextWidth(timeState.amPm, amPmPixelSize, amPmSpacing)
+                        PixelGlyphs.drawSmallText(
+                            drawScope = this,
+                            text = timeState.amPm,
+                            startX = amPmX - (amPmTextW / 2f),
+                            startY = amPmY - (7 * amPmPixelSize / 2f),
+                            pixelSize = amPmPixelSize,
+                            spacing = amPmSpacing,
                             color = PureWhite
                         )
                     }

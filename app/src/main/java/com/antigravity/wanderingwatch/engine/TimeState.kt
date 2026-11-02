@@ -9,6 +9,7 @@ data class TimeState(
     val date: String = "10/28",
     val dayOfWeek: String = "FRI",
     val amPm: String = "PM",
+    val isDaytime: Boolean = false,
     val isMuted: Boolean = false,
     val isAlarmActive: Boolean = true,
     val isCharging: Boolean = true
