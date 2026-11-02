@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -69,7 +69,7 @@ fun DeskClockScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 4.dp, start = 8.dp, end = 8.dp),
+                            .padding(top = 2.dp, start = 6.dp, end = 6.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Top
                     ) {
@@ -85,7 +85,7 @@ fun DeskClockScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
+                            .padding(horizontal = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -96,7 +96,7 @@ fun DeskClockScreen(
                             isAlarmActive = timeState.isAlarmActive,
                             onToggleMute = { viewModel.toggleMute() },
                             onToggleAlarm = { viewModel.toggleAlarm() },
-                            modifier = Modifier.padding(end = 24.dp)
+                            modifier = Modifier.padding(end = 20.dp)
                         )
 
                         // Flip Cards Group
@@ -123,13 +123,12 @@ fun DeskClockScreen(
                                 // Docked seconds badge at lower right corner
                                 DockedSecondsBadge(
                                     seconds = timeState.seconds,
-                                    modifier = Modifier
-                                        .offset(x = 58.dp, y = (-2).dp)
+                                    modifier = Modifier.offset(x = 56.dp, y = (-2).dp)
                                 )
                             }
 
-                            // Spacer to balance the offset of the seconds badge
-                            Spacer(modifier = Modifier.padding(end = 56.dp))
+                            // Counterbalance spacer to keep clock cards optically centered
+                            Spacer(modifier = Modifier.width(56.dp))
                         }
                     }
 

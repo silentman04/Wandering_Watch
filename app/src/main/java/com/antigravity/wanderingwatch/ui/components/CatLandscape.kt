@@ -31,7 +31,7 @@ import kotlin.math.sin
 
 /**
  * Continuous panoramic landscape across the full bottom of the screen.
- * Displays delicate rolling grassy hills, tiny pixel flowers, and an 8-bit white cat
+ * Displays rolling hills, flora/flowers, and a prominently sized 8-bit white cat
  * walking across the horizon in an authentic low-power 8 FPS retro sprite loop.
  */
 @Composable
@@ -51,9 +51,9 @@ fun CatLandscape(
     val infiniteTransition = rememberInfiniteTransition(label = "CatWalk")
     val catProgress by infiniteTransition.animateFloat(
         initialValue = 0.05f,
-        targetValue = 0.92f,
+        targetValue = 0.90f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 32000, easing = LinearEasing),
+            animation = tween(durationMillis = 36000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "CatWalkProgress"
@@ -62,95 +62,97 @@ fun CatLandscape(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(90.dp)
+            .height(105.dp)
             .drawBehind {
-                val p = 2.dp.toPx()
+                val p = 2.4.dp.toPx()
                 val w = size.width
                 val h = size.height
 
                 // 1. Background Hill Line (subtle gentle rolling curve)
                 val bgHillPath = Path().apply {
-                    moveTo(0f, h * 0.55f)
+                    moveTo(0f, h * 0.45f)
                     cubicTo(
-                        w * 0.25f, h * 0.40f,
-                        w * 0.50f, h * 0.65f,
-                        w * 0.75f, h * 0.45f
+                        w * 0.22f, h * 0.30f,
+                        w * 0.48f, h * 0.58f,
+                        w * 0.72f, h * 0.38f
                     )
                     cubicTo(
-                        w * 0.88f, h * 0.35f,
-                        w * 0.95f, h * 0.50f,
-                        w, h * 0.45f
+                        w * 0.86f, h * 0.28f,
+                        w * 0.94f, h * 0.42f,
+                        w, h * 0.36f
                     )
                 }
                 drawPath(
                     path = bgHillPath,
                     color = PureWhite.copy(alpha = 0.35f),
-                    style = Stroke(width = 1.dp.toPx())
+                    style = Stroke(width = 1.2.dp.toPx())
                 )
 
                 // 2. Foreground Rolling Hill Line (where cat walks)
                 fun getHillY(xFrac: Float): Float {
-                    val base = h * 0.62f
+                    val base = h * 0.65f
                     val wave1 = (sin(xFrac * Math.PI * 2.2) * (h * 0.16f)).toFloat()
-                    val wave2 = (sin(xFrac * Math.PI * 4.4 + 1.0) * (h * 0.06f)).toFloat()
+                    val wave2 = (sin(xFrac * Math.PI * 4.4 + 1.2) * (h * 0.06f)).toFloat()
                     return base + wave1 + wave2
                 }
 
                 val fgHillPath = Path().apply {
                     moveTo(0f, getHillY(0f))
-                    var step = 0.02f
+                    var step = 0.015f
                     while (step <= 1.0f) {
                         lineTo(step * w, getHillY(step))
-                        step += 0.02f
+                        step += 0.015f
                     }
                 }
                 drawPath(
                     path = fgHillPath,
                     color = PureWhite,
-                    style = Stroke(width = 1.5.dp.toPx())
+                    style = Stroke(width = 2.dp.toPx())
                 )
 
-                // 3. Delicate grass tufts and tiny pixel flowers scattered along the hill
-                val floraPoints = listOf(0.08f, 0.18f, 0.28f, 0.42f, 0.58f, 0.72f, 0.85f, 0.94f)
+                // 3. Pixel grass tufts and flowers scattered along the path
+                val floraPoints = listOf(0.06f, 0.15f, 0.26f, 0.40f, 0.54f, 0.68f, 0.82f, 0.94f)
                 for (fx in floraPoints) {
                     val flowerX = fx * w
                     val flowerY = getHillY(fx)
 
-                    // Tiny grass blade
-                    drawRect(PureWhite, Offset(flowerX, flowerY - 4 * p), Size(p, 4 * p))
-                    drawRect(PureWhite, Offset(flowerX - p, flowerY - 3 * p), Size(p, 2 * p))
-                    drawRect(PureWhite, Offset(flowerX + p, flowerY - 2 * p), Size(p, 2 * p))
+                    // Stepped grass blades
+                    drawRect(PureWhite, Offset(flowerX, flowerY - 5 * p), Size(p, 5 * p))
+                    drawRect(PureWhite, Offset(flowerX - p, flowerY - 3 * p), Size(p, 3 * p))
+                    drawRect(PureWhite, Offset(flowerX + p, flowerY - 4 * p), Size(p, 4 * p))
 
-                    // Small pixel flower head on some tufts
-                    if (fx == 0.18f || fx == 0.58f || fx == 0.94f) {
-                        drawRect(PureWhite, Offset(flowerX - p, flowerY - 6 * p), Size(3 * p, 2 * p))
-                        drawRect(PureWhite, Offset(flowerX, flowerY - 7 * p), Size(p, p))
+                    // Pixel flowers on selected hills
+                    if (fx == 0.15f || fx == 0.54f || fx == 0.82f || fx == 0.94f) {
+                        drawRect(PureWhite, Offset(flowerX - p, flowerY - 8 * p), Size(3 * p, 2 * p))
+                        drawRect(PureWhite, Offset(flowerX, flowerY - 9 * p), Size(p, p))
+                        drawRect(PureWhite, Offset(flowerX, flowerY - 6 * p), Size(p, p))
                     }
                 }
 
                 // 4. Starlit sparkles in the lower sky
                 val starPoints = listOf(
-                    Pair(0.12f, h * 0.25f),
-                    Pair(0.35f, h * 0.30f),
-                    Pair(0.65f, h * 0.22f),
-                    Pair(0.82f, h * 0.28f)
+                    Pair(0.08f, h * 0.18f),
+                    Pair(0.30f, h * 0.22f),
+                    Pair(0.55f, h * 0.16f),
+                    Pair(0.78f, h * 0.24f),
+                    Pair(0.92f, h * 0.14f)
                 )
                 for ((sx, sy) in starPoints) {
-                    drawRect(PureWhite.copy(alpha = 0.8f), Offset(sx * w, sy), Size(p, p))
+                    drawRect(PureWhite.copy(alpha = 0.85f), Offset(sx * w, sy), Size(1.5f * p, 1.5f * p))
                 }
 
-                // 5. Draw the 8-Bit White Cat Mascot walking along the hill
+                // 5. Draw the 8-Bit White Cat Mascot (2.2x larger scale)
                 val catX = catProgress * w
                 val catY = getHillY(catProgress)
-                draw8BitCat(catX, catY, p, spriteFrame)
+                drawEnlarged8BitCat(catX, catY, p * 1.35f, spriteFrame)
             }
     )
 }
 
 /**
- * Draws an adorable 8-bit white cat sprite with active 4-frame walk cycle.
+ * Draws a prominently sized 8-bit white cat sprite with authentic 4-frame walk cycle.
  */
-private fun DrawScope.draw8BitCat(
+private fun DrawScope.drawEnlarged8BitCat(
     footX: Float,
     footY: Float,
     p: Float,
@@ -163,60 +165,64 @@ private fun DrawScope.draw8BitCat(
         drawRect(PureWhite, Offset(originX + rx * p, originY + ry * p), Size(w * p, h * p))
     }
 
-    // Cat Body (Solid 8-bit white block)
-    px(6, 6, 11, 7)
+    // Cat Solid White Body
+    px(6, 6, 12, 8)
 
     // Cat Head
-    px(14, 3, 7, 6)
+    px(15, 3, 8, 7)
 
-    // Cat Ears
-    px(15, 1, 2, 2)
-    px(19, 1, 2, 2)
+    // Cat Pointed Ears
+    px(16, 0, 2, 3)
+    px(20, 0, 2, 3)
 
-    // Little black pixel eye and nose
-    drawRect(Color.Black, Offset(originX + 18 * p, originY + 5 * p), Size(p, p))
-    drawRect(Color.Black, Offset(originX + 20 * p, originY + 6 * p), Size(p, p))
+    // Cat Muzzle
+    px(21, 6, 2, 4)
 
-    // Animated Tail (swishes gently with walk frames)
-    val tailCurve = when (frame) {
+    // Eye and Nose (Black pixels)
+    drawRect(Color.Black, Offset(originX + 19 * p, originY + 5 * p), Size(1.2f * p, 1.2f * p))
+    drawRect(Color.Black, Offset(originX + 22 * p, originY + 7 * p), Size(1.2f * p, 1.2f * p))
+
+    // Animated Tail (swishes gently)
+    val tailOffset = when (frame) {
         0 -> 0
         1 -> -1
         2 -> -2
         else -> -1
     }
-    px(4 + tailCurve, 4, 2, 2)
-    px(3 + tailCurve, 2, 2, 3)
-    px(2 + tailCurve, 1, 2, 2)
+    px(4 + tailOffset, 5, 2, 2)
+    px(3 + tailOffset, 3, 2, 3)
+    px(2 + tailOffset, 1, 2, 3)
+    px(3 + tailOffset, 0, 2, 2)
 
-    // Animated Walking Legs (4-frame cycle)
+    // Animated Walking Legs (4-frame walk cycle)
     when (frame) {
         0 -> {
-            // Front right forward, back right forward
-            px(7, 13, 2, 4)
-            px(11, 13, 2, 4)
-            px(14, 13, 2, 5)
-            px(18, 13, 2, 3)
+            // Right front forward, left back forward
+            px(7, 14, 2, 4)
+            px(11, 14, 2, 5)
+            px(15, 14, 2, 5)
+            px(19, 14, 2, 3)
         }
         1 -> {
             // Passing frame
-            px(8, 13, 2, 4)
-            px(10, 13, 2, 4)
-            px(15, 13, 2, 4)
-            px(17, 13, 2, 4)
+            px(8, 14, 2, 4)
+            px(10, 14, 2, 4)
+            px(16, 14, 2, 4)
+            px(18, 14, 2, 4)
         }
         2 -> {
-            // Front left forward, back left forward
-            px(9, 13, 2, 3)
-            px(12, 13, 2, 5)
-            px(16, 13, 2, 4)
-            px(17, 13, 2, 4)
+            // Left front forward, right back forward
+            px(9, 14, 2, 3)
+            px(12, 14, 2, 5)
+            px(17, 14, 2, 4)
+            px(18, 14, 2, 4)
         }
         else -> {
             // Passing frame
-            px(8, 13, 2, 4)
-            px(11, 13, 2, 4)
-            px(15, 13, 2, 4)
-            px(17, 13, 2, 4)
+            px(8, 14, 2, 4)
+            px(11, 14, 2, 4)
+            px(16, 14, 2, 4)
+            px(18, 14, 2, 4)
         }
     }
 }

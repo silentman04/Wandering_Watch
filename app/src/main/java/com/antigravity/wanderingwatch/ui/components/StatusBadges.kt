@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,16 +23,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.antigravity.wanderingwatch.ui.theme.DarkFlipCardBg
-import com.antigravity.wanderingwatch.ui.theme.FlipCardBorder
-import com.antigravity.wanderingwatch.ui.theme.PixelFontFamily
 import com.antigravity.wanderingwatch.ui.theme.PureWhite
 
 /**
  * Top-left compact date ("10/28") and day of week ("FRI") outline badges.
+ * Rendered using authentic 1-bit pixel glyphs.
  */
 @Composable
 fun DateDayBadges(
@@ -46,39 +42,59 @@ fun DateDayBadges(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Date Badge (e.g. "10/28")
+        // Date Badge (e.g. "10/28" or "11/02")
         Box(
             modifier = Modifier
+                .width(66.dp)
+                .height(30.dp)
                 .background(DarkFlipCardBg, shape = RoundedCornerShape(6.dp))
                 .border(1.5.dp, PureWhite, shape = RoundedCornerShape(6.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = date,
-                fontFamily = PixelFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = PureWhite
-            )
-        }
+                .drawBehind {
+                    val p = 1.8.dp.toPx()
+                    val spacing = 1.5.dp.toPx()
+                    val textW = PixelGlyphs.measureSmallTextWidth(date, p, spacing)
+                    val textH = 7 * p
+                    val startX = (size.width - textW) / 2f
+                    val startY = (size.height - textH) / 2f
 
-        // Day Badge (e.g. "FRI")
+                    PixelGlyphs.drawSmallText(
+                        drawScope = this,
+                        text = date,
+                        startX = startX,
+                        startY = startY,
+                        pixelSize = p,
+                        spacing = spacing,
+                        color = PureWhite
+                    )
+                }
+        )
+
+        // Day Badge (e.g. "FRI" or "MON")
         Box(
             modifier = Modifier
+                .width(50.dp)
+                .height(30.dp)
                 .background(DarkFlipCardBg, shape = RoundedCornerShape(6.dp))
                 .border(1.5.dp, PureWhite, shape = RoundedCornerShape(6.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = dayOfWeek,
-                fontFamily = PixelFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = PureWhite
-            )
-        }
+                .drawBehind {
+                    val p = 1.8.dp.toPx()
+                    val spacing = 1.5.dp.toPx()
+                    val textW = PixelGlyphs.measureSmallTextWidth(dayOfWeek, p, spacing)
+                    val textH = 7 * p
+                    val startX = (size.width - textW) / 2f
+                    val startY = (size.height - textH) / 2f
+
+                    PixelGlyphs.drawSmallText(
+                        drawScope = this,
+                        text = dayOfWeek,
+                        startX = startX,
+                        startY = startY,
+                        pixelSize = p,
+                        spacing = spacing,
+                        color = PureWhite
+                    )
+                }
+        )
     }
 }
 
@@ -96,27 +112,27 @@ fun LeftStatusStack(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Pixel Speaker Icon
         Box(
             modifier = Modifier
-                .size(32.dp)
+                .size(34.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onToggleMute
                 )
                 .drawBehind {
-                    val p = 2.dp.toPx()
+                    val p = 2.2.dp.toPx()
                     // Speaker body
                     drawRect(color = PureWhite, topLeft = Offset(4 * p, 4 * p), size = Size(3 * p, 8 * p))
                     // Cone
                     val conePath = Path().apply {
                         moveTo(7 * p, 4 * p)
-                        lineTo(11 * p, 1 * p)
-                        lineTo(11 * p, 15 * p)
+                        lineTo(11 * p, 1.5f * p)
+                        lineTo(11 * p, 14.5f * p)
                         lineTo(7 * p, 12 * p)
                         close()
                     }
@@ -129,9 +145,9 @@ fun LeftStatusStack(
                             startAngle = -45f,
                             sweepAngle = 90f,
                             useCenter = false,
-                            topLeft = Offset(8 * p, 2 * p),
-                            size = Size(8 * p, 12 * p),
-                            style = Stroke(width = 1.5.dp.toPx())
+                            topLeft = Offset(9 * p, 2.5f * p),
+                            size = Size(8 * p, 11 * p),
+                            style = Stroke(width = 1.8.dp.toPx())
                         )
                     } else {
                         // Mute diagonal line
@@ -148,14 +164,14 @@ fun LeftStatusStack(
         // Pixel Alarm Bell Icon
         Box(
             modifier = Modifier
-                .size(32.dp)
+                .size(34.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onToggleAlarm
                 )
                 .drawBehind {
-                    val p = 2.dp.toPx()
+                    val p = 2.2.dp.toPx()
                     val alpha = if (isAlarmActive) 1.0f else 0.35f
 
                     // Top loop
@@ -172,7 +188,7 @@ fun LeftStatusStack(
                     }
                     drawPath(bellPath, color = PureWhite.copy(alpha = alpha))
 
-                    // Clapper
+                    // Bell clapper
                     drawRect(color = PureWhite.copy(alpha = alpha), topLeft = Offset(7 * p, 13 * p), size = Size(2 * p, 2 * p))
                 }
         )
@@ -180,19 +196,28 @@ fun LeftStatusStack(
         // AM/PM Badge
         Box(
             modifier = Modifier
-                .width(42.dp)
+                .width(44.dp)
                 .height(30.dp)
                 .background(DarkFlipCardBg, shape = RoundedCornerShape(6.dp))
-                .border(1.5.dp, PureWhite, shape = RoundedCornerShape(6.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = amPm,
-                fontFamily = PixelFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                color = PureWhite
-            )
-        }
+                .border(1.5.dp, PureWhite, shape = RoundedCornerShape(6.dp))
+                .drawBehind {
+                    val p = 1.8.dp.toPx()
+                    val spacing = 1.5.dp.toPx()
+                    val textW = PixelGlyphs.measureSmallTextWidth(amPm, p, spacing)
+                    val textH = 7 * p
+                    val startX = (size.width - textW) / 2f
+                    val startY = (size.height - textH) / 2f
+
+                    PixelGlyphs.drawSmallText(
+                        drawScope = this,
+                        text = amPm,
+                        startX = startX,
+                        startY = startY,
+                        pixelSize = p,
+                        spacing = spacing,
+                        color = PureWhite
+                    )
+                }
+        )
     }
 }

@@ -14,8 +14,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 
 /**
- * Outer glowing halo border matching the subtle corner curvature of the Pixel 9a bezel.
- * Emits an ambient white neon glow into the pitch-black OLED display.
+ * Outer glowing halo border matching the sleek curvature of the Pixel 9a bezel.
+ * Emits a visible, multi-layered ambient white neon bloom into the pitch-black OLED display.
  */
 @Composable
 fun OuterHaloContainer(
@@ -23,16 +23,15 @@ fun OuterHaloContainer(
     isNightDimmed: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val haloAlpha = if (isNightDimmed) 0.35f else 0.90f
-    val glowAlpha = if (isNightDimmed) 0.08f else 0.22f
+    val haloAlpha = if (isNightDimmed) 0.40f else 1.0f
+    val glowAlpha = if (isNightDimmed) 0.12f else 0.45f
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .drawBehind {
-                val strokeWidth = 2.5.dp.toPx()
-                val cornerRadiusPx = 28.dp.toPx()
-                val marginPx = 14.dp.toPx()
+                val cornerRadiusPx = 22.dp.toPx()
+                val marginPx = 10.dp.toPx()
 
                 val haloSize = Size(
                     width = size.width - (marginPx * 2),
@@ -40,34 +39,43 @@ fun OuterHaloContainer(
                 )
                 val haloOffset = Offset(marginPx, marginPx)
 
-                // Outer diffused glow bloom layer 1 (wide)
+                // Pass 1: Wide diffused ambient bloom
                 drawRoundRect(
-                    color = Color.White.copy(alpha = glowAlpha * 0.4f),
+                    color = Color.White.copy(alpha = glowAlpha * 0.25f),
+                    topLeft = Offset(marginPx - 6.dp.toPx(), marginPx - 6.dp.toPx()),
+                    size = Size(haloSize.width + 12.dp.toPx(), haloSize.height + 12.dp.toPx()),
+                    cornerRadius = CornerRadius(cornerRadiusPx + 6.dp.toPx()),
+                    style = Stroke(width = 14.dp.toPx())
+                )
+
+                // Pass 2: Medium diffused bloom
+                drawRoundRect(
+                    color = Color.White.copy(alpha = glowAlpha * 0.50f),
                     topLeft = Offset(marginPx - 3.dp.toPx(), marginPx - 3.dp.toPx()),
                     size = Size(haloSize.width + 6.dp.toPx(), haloSize.height + 6.dp.toPx()),
                     cornerRadius = CornerRadius(cornerRadiusPx + 3.dp.toPx()),
                     style = Stroke(width = 8.dp.toPx())
                 )
 
-                // Middle diffused glow bloom layer 2
+                // Pass 3: Tight radiant glow
                 drawRoundRect(
-                    color = Color.White.copy(alpha = glowAlpha),
+                    color = Color.White.copy(alpha = glowAlpha * 0.85f),
                     topLeft = Offset(marginPx - 1.5.dp.toPx(), marginPx - 1.5.dp.toPx()),
                     size = Size(haloSize.width + 3.dp.toPx(), haloSize.height + 3.dp.toPx()),
                     cornerRadius = CornerRadius(cornerRadiusPx + 1.5.dp.toPx()),
-                    style = Stroke(width = 4.dp.toPx())
+                    style = Stroke(width = 4.5.dp.toPx())
                 )
 
-                // Core crisp white halo ring
+                // Pass 4: Core crisp white neon rim
                 drawRoundRect(
                     color = Color.White.copy(alpha = haloAlpha),
                     topLeft = haloOffset,
                     size = haloSize,
                     cornerRadius = CornerRadius(cornerRadiusPx),
-                    style = Stroke(width = strokeWidth)
+                    style = Stroke(width = 3.dp.toPx())
                 )
             }
-            .padding(horizontal = 28.dp, vertical = 22.dp)
+            .padding(horizontal = 24.dp, vertical = 18.dp)
     ) {
         content()
     }
