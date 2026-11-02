@@ -1,184 +1,135 @@
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+# Build Wandering_Watch_Grid_Layout.pptx using native PowerPoint COM automation
+# This ensures 100% binary compatibility with PowerPoint and prevents any XML schema corruption.
 
-$stagingDir = Join-Path $PWD "staging_pptx"
-if (Test-Path $stagingDir) { Remove-Item -Recurse -Force $stagingDir }
-New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
-
-# Extract template
-[System.IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $PWD "Pixel_Desk_Clock_Design_Evolution.pptx"), $stagingDir)
-
-# 1. Update ppt/presentation.xml slide dimensions to 1272 x 660 px (in EMUs: 12115800 x 6286500)
-$presXmlPath = Join-Path $stagingDir "ppt\presentation.xml"
-$presXml = [xml](Get-Content $presXmlPath)
-$sldSz = $presXml.SelectSingleNode("//*[local-name()='sldSz']")
-if ($sldSz) {
-    $sldSz.SetAttribute("cx", "12115800")
-    $sldSz.SetAttribute("cy", "6286500")
-}
-$presXml.Save($presXmlPath)
-
-# 2. Clear old media and copy our new 8 slice images into ppt/media
-$mediaDir = Join-Path $stagingDir "ppt\media"
-if (-not (Test-Path $mediaDir)) { New-Item -ItemType Directory -Path $mediaDir -Force | Out-Null }
-Get-ChildItem $mediaDir | Remove-Item -Force
+$ErrorActionPreference = "Stop"
 
 $slicesDir = Join-Path $PWD "slices"
-$images = @(
-    @{ File="01_outer_halo.png";           Name="01 - Outer Halo Frame";                   X=0;   Y=0;   W=1272; H=660; rId="rId2" },
-    @{ File="07_landscape_hills_cat.png";  Name="07 - Landscape Horizon, Hills & Cat";     X=14;  Y=420; W=1244; H=230; rId="rId3" },
-    @{ File="05_flip_clock_cards.png";     Name="05 - Flip Clock Cards (Hours & Minutes)"; X=324; Y=214; W=598;  H=248; rId="rId4" },
-    @{ File="06_seconds_card.png";         Name="06 - Seconds Card";                       X=886; Y=346; W=125;  H=96;  rId="rId5" },
-    @{ File="02_date_day_badges.png";      Name="02 - Date & Day Badges";                  X=76;  Y=54;  W=426;  H=130; rId="rId6" },
-    @{ File="03_status_stack.png";         Name="03 - Status Stack (Speaker, Bell, AM-PM)";X=76;  Y=180; W=78;   H=224; rId="rId7" },
-    @{ File="04_weather_widget_night.png"; Name="04 - Weather Widget (Night Moon)";        X=924; Y=53;  W=272;  H=197; rId="rId8" },
-    @{ File="04_weather_widget_day.png";   Name="04 - Weather Widget (Day Sun)";           X=924; Y=53;  W=272;  H=197; rId="rId9" }
-)
-
-for ($i = 0; $i -lt $images.Count; $i++) {
-    $img = $images[$i]
-    $srcImg = Join-Path $slicesDir $img.File
-    $destImg = Join-Path $mediaDir "image$($i+1).png"
-    Copy-Item $srcImg $destImg -Force
-}
-
-# 3. Clean up extra slides in ppt/slides, keep only slide1.xml
-$slidesDir = Join-Path $stagingDir "ppt\slides"
-Get-ChildItem $slidesDir -Filter "slide*.xml" | Where-Object { $_.Name -ne "slide1.xml" } | Remove-Item -Force
-
-$slidesRelsDir = Join-Path $stagingDir "ppt\slides\_rels"
-Get-ChildItem $slidesRelsDir -Filter "slide*.xml.rels" | Where-Object { $_.Name -ne "slide1.xml.rels" } | Remove-Item -Force
-
-# Update ppt/_rels/presentation.xml.rels to keep only slide1.xml
-$presRelsPath = Join-Path $stagingDir "ppt\_rels\presentation.xml.rels"
-$presRelsXml = [xml](Get-Content $presRelsPath)
-$nsMgr = New-Object System.Xml.XmlNamespaceManager($presRelsXml.NameTable)
-$nsMgr.AddNamespace("r", "http://schemas.openxmlformats.org/package/2006/relationships")
-
-$slideRelNodes = $presRelsXml.SelectNodes("//r:Relationship[contains(@Type, 'slide') and not(contains(@Type, 'slideMaster'))]", $nsMgr)
-foreach ($node in $slideRelNodes) {
-    if ($node.GetAttribute("Target") -ne "slides/slide1.xml") {
-        $node.ParentNode.RemoveChild($node) | Out-Null
-    }
-}
-$presRelsXml.Save($presRelsPath)
-
-# Update ppt/presentation.xml sldIdLst to keep only slide1
-$sldIdLst = $presXml.SelectSingleNode("//*[local-name()='sldIdLst']")
-if ($sldIdLst) {
-    $firstSld = $sldIdLst.FirstChild
-    $sldIdLst.RemoveAll()
-    $sldIdLst.AppendChild($firstSld) | Out-Null
-    $presXml.Save($presXmlPath)
-}
-
-# 4. Generate slide1.xml
-$sbPic = New-Object System.Text.StringBuilder
-$shapeId = 2
-for ($i = 0; $i -lt $images.Count; $i++) {
-    $img = $images[$i]
-    $offX = $img.X * 9525
-    $offY = $img.Y * 9525
-    $extCx = $img.W * 9525
-    $extCy = $img.H * 9525
-    $rId = "rId$($i+2)"
-    $name = $img.Name
-
-    [void]$sbPic.AppendLine("  <p:pic>")
-    [void]$sbPic.AppendLine("    <p:nvPicPr>")
-    [void]$sbPic.AppendLine("      <p:cNvPr id=""$shapeId"" name=""$name""/>")
-    [void]$sbPic.AppendLine("      <p:cNvPicPr><a:picLocks noChangeAspect=""1""/></p:cNvPicPr>")
-    [void]$sbPic.AppendLine("      <p:nvPr/>")
-    [void]$sbPic.AppendLine("    </p:nvPicPr>")
-    [void]$sbPic.AppendLine("    <p:blipFill>")
-    [void]$sbPic.AppendLine("      <a:blip r:embed=""$rId""/>")
-    [void]$sbPic.AppendLine("      <a:stretch><a:fillRect/></a:stretch>")
-    [void]$sbPic.AppendLine("    </p:blipFill>")
-    [void]$sbPic.AppendLine("    <p:spPr>")
-    [void]$sbPic.AppendLine("      <a:xfrm>")
-    [void]$sbPic.AppendLine("        <a:off x=""$offX"" y=""$offY""/>")
-    [void]$sbPic.AppendLine("        <a:ext cx=""$extCx"" cy=""$extCy""/>")
-    [void]$sbPic.AppendLine("      </a:xfrm>")
-    [void]$sbPic.AppendLine("      <a:prstGeom prst=""rect""><a:avLst/></a:prstGeom>")
-    [void]$sbPic.AppendLine("    </p:spPr>")
-    [void]$sbPic.AppendLine("  </p:pic>")
-    $shapeId++
-}
-
-$slide1Content = @"
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-  <p:cSld>
-    <p:bg>
-      <p:bgPr>
-        <a:solidFill><a:srgbClr val="000000"/></a:solidFill>
-        <a:effectLst/>
-      </p:bgPr>
-    </p:bg>
-    <p:spTree>
-      <p:nvGrpSpPr>
-        <p:cNvPr id="1" name=""/>
-        <p:cNvGrpSpPr/>
-        <p:nvPr/>
-      </p:nvGrpSpPr>
-      <p:grpSpPr>
-        <a:xfrm>
-          <a:off x="0" y="0"/>
-          <a:ext cx="0" cy="0"/>
-          <a:chOff x="0" y="0"/>
-          <a:chExt cx="0" cy="0"/>
-        </a:xfrm>
-      </p:grpSpPr>
-$($sbPic.ToString())
-    </p:spTree>
-  </p:cSld>
-  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
-</p:sld>
-"@
-
-$slide1Path = Join-Path $stagingDir "ppt\slides\slide1.xml"
-[System.IO.File]::WriteAllText($slide1Path, $slide1Content.Trim(), [System.Text.Encoding]::UTF8)
-
-# 5. Generate slide1.xml.rels
-$sbRels = New-Object System.Text.StringBuilder
-[void]$sbRels.AppendLine('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>')
-[void]$sbRels.AppendLine('<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">')
-[void]$sbRels.AppendLine('  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>')
-
-for ($i = 0; $i -lt $images.Count; $i++) {
-    $rId = "rId$($i+2)"
-    $targetImg = "../media/image$($i+1).png"
-    [void]$sbRels.AppendLine("  <Relationship Id=""$rId"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"" Target=""$targetImg""/>")
-}
-[void]$sbRels.AppendLine('</Relationships>')
-
-$slide1RelsPath = Join-Path $stagingDir "ppt\slides\_rels\slide1.xml.rels"
-[System.IO.File]::WriteAllText($slide1RelsPath, $sbRels.ToString(), [System.Text.Encoding]::UTF8)
-
-# 6. Update [Content_Types].xml
-$contentTypesPath = Join-Path $stagingDir "[Content_Types].xml"
-$ctXml = [xml](Get-Content -LiteralPath $contentTypesPath)
-$nsCt = New-Object System.Xml.XmlNamespaceManager($ctXml.NameTable)
-$nsCt.AddNamespace("c", "http://schemas.openxmlformats.org/package/2006/content-types")
-
-$extraSlides = $ctXml.SelectNodes("//c:Override[contains(@PartName, '/ppt/slides/slide') and @PartName != '/ppt/slides/slide1.xml']", $nsCt)
-foreach ($node in $extraSlides) {
-    $node.ParentNode.RemoveChild($node) | Out-Null
-}
-
-$pngDefault = $ctXml.SelectSingleNode("//c:Default[@Extension='png']", $nsCt)
-if (-not $pngDefault) {
-    $newDef = $ctXml.CreateElement("Default", "http://schemas.openxmlformats.org/package/2006/content-types")
-    $newDef.SetAttribute("Extension", "png")
-    $newDef.SetAttribute("ContentType", "image/png")
-    $ctXml.DocumentElement.AppendChild($newDef) | Out-Null
-}
-$ctXml.Save($contentTypesPath)
-
-# 7. Zip staging folder into Wandering_Watch_Grid_Layout.pptx
 $outPptx = Join-Path $PWD "Wandering_Watch_Grid_Layout.pptx"
-if (Test-Path $outPptx) { Remove-Item -Force $outPptx }
-[System.IO.Compression.ZipFile]::CreateFromDirectory($stagingDir, $outPptx)
 
-Remove-Item -Recurse -Force $stagingDir
+# Ensure PowerPoint is closed before starting
+Get-Process -Name POWERPNT -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Milliseconds 500
 
-Write-Host "Generated Wandering_Watch_Grid_Layout.pptx successfully!"
+$ppt = New-Object -ComObject PowerPoint.Application
+
+try {
+    # 0 = Hidden / no window, 1 = With window
+    $pres = $ppt.Presentations.Add(0)
+
+    # 1. Slide Dimensions: Pixel 9a ratio at 1272 x 660 px (converted to Points: 1 px = 0.75 pt)
+    $slideW = 1272 * 0.75 # 954 pt
+    $slideH = 660 * 0.75  # 495 pt
+    $pres.PageSetup.SlideWidth = $slideW
+    $pres.PageSetup.SlideHeight = $slideH
+
+    # Define slice components with pixel coordinates
+    $layersCommon = @(
+        @{ File="01_outer_halo.png";          Name="01 - Outer Halo Frame";                     X=0;   Y=0;   W=1272; H=660 },
+        @{ File="07_landscape_hills_cat.png"; Name="07 - Landscape Horizon, Hills and Cat";     X=14;  Y=420; W=1244; H=230 },
+        @{ File="05_flip_clock_cards.png";    Name="05 - Flip Clock Cards (Hours and Minutes)"; X=324; Y=214; W=598;  H=248 },
+        @{ File="06_seconds_card.png";        Name="06 - Seconds Card";                         X=886; Y=346; W=125;  H=96  },
+        @{ File="02_date_day_badges.png";     Name="02 - Date and Day Badges";                  X=76;  Y=54;  W=426;  H=130 },
+        @{ File="03_status_stack.png";        Name="03 - Status Stack (Speaker, Bell, AM-PM)";  X=76;  Y=180; W=78;   H=224 }
+    )
+
+    $nightWeather = @{ File="04_weather_widget_night.png"; Name="04 - Weather Widget (Night Moon)"; X=924; Y=53; W=272; H=197 }
+    $dayWeather   = @{ File="04_weather_widget_day.png";   Name="04 - Weather Widget (Day Sun)";    X=924; Y=53; W=272; H=197 }
+
+    function SetupSlideBackground($slide) {
+        $slide.FollowMasterBackground = 0 # msoFalse
+        $slide.Background.Fill.Solid()
+        $slide.Background.Fill.ForeColor.RGB = 0 # Pitch black
+    }
+
+    function AddLayer($slide, $layerDef) {
+        $filePath = Join-Path $slicesDir $layerDef.File
+        if (-not (Test-Path $filePath)) {
+            throw "Slice file missing: $filePath"
+        }
+        $left = $layerDef.X * 0.75
+        $top = $layerDef.Y * 0.75
+        $width = $layerDef.W * 0.75
+        $height = $layerDef.H * 0.75
+
+        # Shapes.AddPicture(FileName, LinkToFile, SaveWithDocument, Left, Top, Width, Height)
+        # LinkToFile = 0 (msoFalse), SaveWithDocument = -1 (msoTrue)
+        $shp = $slide.Shapes.AddPicture($filePath, 0, -1, $left, $top, $width, $height)
+        $shp.Name = $layerDef.Name
+        $shp.LockAspectRatio = -1 # msoTrue
+        return $shp
+    }
+
+    # ==========================================================
+    # SLIDE 1: Night Layout (Full Interactive Composition)
+    # ==========================================================
+    $slide1 = $pres.Slides.Add(1, 12) # 12 = ppLayoutBlank
+    SetupSlideBackground $slide1
+
+    foreach ($layer in $layersCommon) {
+        AddLayer $slide1 $layer | Out-Null
+    }
+    AddLayer $slide1 $nightWeather | Out-Null
+    Write-Host "Slide 1 (Night Layout) populated with 7 movable layers."
+
+    # ==========================================================
+    # SLIDE 2: Day Layout (Full Interactive Composition)
+    # ==========================================================
+    $slide2 = $pres.Slides.Add(2, 12)
+    SetupSlideBackground $slide2
+
+    foreach ($layer in $layersCommon) {
+        AddLayer $slide2 $layer | Out-Null
+    }
+    AddLayer $slide2 $dayWeather | Out-Null
+    Write-Host "Slide 2 (Day Layout) populated with 7 movable layers."
+
+    # ==========================================================
+    # SLIDE 3: Component Palette & Reference Library
+    # ==========================================================
+    $slide3 = $pres.Slides.Add(3, 12)
+    SetupSlideBackground $slide3
+
+    # Add a title header
+    $tb = $slide3.Shapes.AddTextbox(1, 40 * 0.75, 20 * 0.75, 800 * 0.75, 40 * 0.75)
+    $tb.TextFrame.TextRange.Text = "WANDERING WATCH - COMPONENT SLICES PALETTE"
+    $tb.TextFrame.TextRange.Font.Name = "Consolas"
+    $tb.TextFrame.TextRange.Font.Size = 16
+    $tb.TextFrame.TextRange.Font.Bold = -1
+    $tb.TextFrame.TextRange.Font.Color.RGB = 0x00FFFFFF # White
+
+    # Add all slices with both weather variants for copy-pasting
+    $allSlices = @(
+        @{ File="02_date_day_badges.png";     Name="Date and Day Badges";     X=40;  Y=80;  W=426; H=130 },
+        @{ File="03_status_stack.png";        Name="Status Stack";            X=40;  Y=230; W=78;  H=224 },
+        @{ File="05_flip_clock_cards.png";    Name="Flip Clock Cards";        X=140; Y=230; W=598; H=248 },
+        @{ File="06_seconds_card.png";        Name="Seconds Card";            X=760; Y=230; W=125; H=96  },
+        @{ File="04_weather_widget_night.png"; Name="Weather (Night Moon)";    X=920; Y=80;  W=272; H=197 },
+        @{ File="04_weather_widget_day.png";   Name="Weather (Day Sun)";       X=920; Y=300; W=272; H=197 },
+        @{ File="07_landscape_hills_cat.png"; Name="Landscape Hills and Cat"; X=40;  Y=500; W=1150; H=150 }
+    )
+
+    foreach ($item in $allSlices) {
+        $p = Join-Path $slicesDir $item.File
+        $scale = 0.75
+        if ($item.File -eq "07_landscape_hills_cat.png") {
+            # Scale slightly to fit palette slide
+            $scale = 0.55
+        }
+        $shp = $slide3.Shapes.AddPicture($p, 0, -1, $item.X * 0.75, $item.Y * 0.75, $item.W * $scale, $item.H * $scale)
+        $shp.Name = "Palette: " + $item.Name
+    }
+    Write-Host "Slide 3 (Palette Reference) created."
+
+    # Save presentation
+    if (Test-Path $outPptx) { Remove-Item -Force $outPptx }
+    $pres.SaveAs($outPptx)
+    $pres.Close()
+
+    Write-Host "Successfully generated native PPTX at: $outPptx"
+
+} finally {
+    $ppt.Quit()
+    [System.Runtime.InteropServices.Marshal]::ReleaseComObject($ppt) | Out-Null
+    [System.GC]::Collect()
+    [System.GC]::WaitForPendingFinalizers()
+}
